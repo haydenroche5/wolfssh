@@ -191,6 +191,9 @@ typedef struct WS_UserAuthData_PublicKey {
     byte hasSignature;
     const byte* signature;
     word32 signatureSz;
+    const byte* caKey;
+    word32 caKeySz;
+    byte isOsshCert:1;
 } WS_UserAuthData_PublicKey;
 
 typedef struct WS_UserAuthData {
@@ -226,6 +229,11 @@ WOLFSSH_API char* wolfSSH_GetUsername(WOLFSSH*);
 WOLFSSH_API int wolfSSH_CTX_SetBanner(WOLFSSH_CTX*, const char*);
 WOLFSSH_API int wolfSSH_CTX_UsePrivateKey_buffer(WOLFSSH_CTX*,
                                                  const byte*, word32, int);
+#ifdef WOLFSSH_OSSH_CERTS
+WOLFSSH_API int wolfSSH_CTX_UseOsshCert_buffer(WOLFSSH_CTX* ctx,
+            const byte* cert, word32 certSz);
+#endif /* WOLFSSH_OSSH_CERTS */
+
 WOLFSSH_API int wolfSSH_CTX_SetWindowPacketSize(WOLFSSH_CTX*, word32, word32);
 
 WOLFSSH_API int wolfSSH_accept(WOLFSSH*);

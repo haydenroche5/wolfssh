@@ -30,6 +30,7 @@
 
 #include <wolfssh/ssh.h>
 #include <wolfssh/wolfsftp.h>
+#include <wolfssh/ossh_certs.h>
 
 #include <wolfssl/wolfcrypt/hash.h>
 #include <wolfssl/wolfcrypt/random.h>
@@ -280,6 +281,7 @@ enum {
     ID_ECDSA_SHA2_NISTP256,
     ID_ECDSA_SHA2_NISTP384,
     ID_ECDSA_SHA2_NISTP521,
+    ID_OSSH_CERT_RSA,
 
     /* Service IDs */
     ID_SERVICE_USERAUTH,
@@ -298,6 +300,9 @@ enum {
     /* Global Request IDs */
     ID_GLOBREQ_TCPIP_FWD,
     ID_GLOBREQ_TCPIP_FWD_CANCEL,
+
+    ID_RSA_SHA2_256,
+    ID_RSA_SHA2_512,
 
     ID_UNKNOWN
 };
@@ -320,6 +325,7 @@ enum {
 #define MSG_ID_SZ 1
 #define SHA1_96_SZ 12
 #define UINT32_SZ 4
+#define UINT64_SZ 8
 #define SSH_PROTO_SZ 7 /* "SSH-2.0" */
 #define AEAD_IMP_IV_SZ 4
 #define AEAD_EXP_IV_SZ 8
@@ -417,9 +423,6 @@ struct WOLFSSH_CTX {
     byte* privateKey;                 /* Owned by CTX */
     word32 privateKeySz;
     byte useEcc;                      /* Depends on the private key */
-#ifndef WOLFSSH_NO_SABER_LEVEL1_SHA256
-    byte useSaber:1;                  /* Depends on the private key */
-#endif
     word32 highwaterMark;
     const char* banner;
     word32 bannerSz;
@@ -427,9 +430,20 @@ struct WOLFSSH_CTX {
     word32 maxPacketSz;
     byte side;                        /* client or server */
     byte showBanner;
+#ifdef WOLFSSH_OSSH_CERTS
+    WOLFSSH_OSSH_CERT* osshCert;
+    byte* osshCertRaw;
+    word32 osshCertRawSz;
+#endif /* WOLFSSH_OSSH_CERTS */
 #ifdef WOLFSSH_AGENT
     byte agentEnabled;
 #endif /* WOLFSSH_AGENT */
+#ifndef WOLFSSH_NO_SABER_LEVEL1_SHA256
+    byte useSaber:1;                  /* Depends on the private key */
+#endif
+#ifdef WOLFSSH_OSSH_CERTS
+    byte useOsshCert:1;
+#endif /* WOLFSSH_OSSH_CERTS */
 };
 
 
@@ -452,6 +466,7 @@ typedef struct HandshakeInfo {
     byte kexId;
     byte kexIdGuess;
     byte pubKeyId;
+    byte sigId;
     byte encryptId;
     byte macId;
     byte hashId;
@@ -759,6 +774,7 @@ WOLFSSH_LOCAL int wolfSSH_FwdWorker(WOLFSSH*);
 /* Parsing functions */
 WOLFSSH_LOCAL int GetBoolean(byte*, byte*, word32, word32*);
 WOLFSSH_LOCAL int GetUint32(word32*, const byte*, word32, word32*);
+WOLFSSH_LOCAL int GetUint64(w64wrapper*, const byte*, word32, word32*);
 WOLFSSH_LOCAL int GetSize(word32*, const byte*, word32, word32*);
 WOLFSSH_LOCAL int GetMpint(word32*, byte**, byte*, word32, word32*);
 WOLFSSH_LOCAL int GetString(char*, word32*, byte*, word32, word32*);
@@ -979,7 +995,9 @@ enum WS_DynamicTypes {
     DYNTYPE_FILE,
     DYNTYPE_TEMP,
     DYNTYPE_PATH,
-    DYNTYPE_SSHD
+    DYNTYPE_SSHD,
+    DYNTYPE_OSSH_CERT,
+    DYNTYPE_OSSH_PRINCIPAL,
 };
 
 
@@ -987,7 +1005,10 @@ enum WS_BufferTypes {
     BUFTYPE_CA,
     BUFTYPE_CERT,
     BUFTYPE_PRIVKEY,
-    BUFTYPE_PUBKEY
+    BUFTYPE_PUBKEY,
+#ifdef WOLFSSH_OSSH_CERTS
+    BUFTYPE_OSSH_CERT,
+#endif /* WOLFSSH_OSSH_CERTS */
 };
 
 

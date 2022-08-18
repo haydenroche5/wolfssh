@@ -1458,6 +1458,7 @@ int wolfSSH_ReadKey_buffer(const byte* in, word32 inSz, int format,
             const char* name;
             word32 typeSz;
             byte nameId;
+            int dynamicType = DYNTYPE_PRIVKEY;
 
             typeSz = (word32)WSTRLEN(type);
 
@@ -1466,11 +1467,15 @@ int wolfSSH_ReadKey_buffer(const byte* in, word32 inSz, int format,
             *outType = (const byte*)name;
             *outTypeSz = typeSz;
 
+            if (nameId == ID_OSSH_CERT_RSA) {
+                dynamicType = DYNTYPE_PUBKEY;
+            }
+
             if (*out == NULL) {
                 /* set size based on sanity check in wolfSSL base64 decode
                  * function */
                 *outSz = ((word32)WSTRLEN(key) * 3 + 3) / 4;
-                newKey = (byte*)WMALLOC(*outSz, heap, DYNTYPE_PRIVKEY);
+                newKey = (byte*)WMALLOC(*outSz, heap, dynamicType);
                 if (newKey == NULL) {
                     return WS_MEMORY_E;
                 }
@@ -1677,6 +1682,26 @@ int wolfSSH_CTX_UsePrivateKey_buffer(WOLFSSH_CTX* ctx,
     WLOG(WS_LOG_DEBUG, "Entering wolfSSH_CTX_UsePrivateKey_buffer()");
     return wolfSSH_ProcessBuffer(ctx, in, inSz, format, BUFTYPE_PRIVKEY);
 }
+
+
+#ifdef WOLFSSH_OSSH_CERTS
+
+int wolfSSH_CTX_UseOsshCert_buffer(WOLFSSH_CTX* ctx, const byte* cert,
+                                   word32 certSz)
+{
+    int ret = WS_SUCCESS;
+
+    WLOG(WS_LOG_DEBUG, "wolfSSH_CTX_UseOpenSSHCert_buffer()");
+
+    ret = wolfSSH_ProcessBuffer(ctx, cert, certSz, WOLFSSH_FORMAT_SSH,
+                                BUFTYPE_OSSH_CERT);
+
+    WLOG(WS_LOG_DEBUG, "wolfSSH_CTX_UseOpenSSHCert_buffer, ret = %d", ret);
+
+    return ret;
+}
+
+#endif /* WOLFSSH_OSSH_CERTS */
 
 
 int wolfSSH_CTX_SetWindowPacketSize(WOLFSSH_CTX* ctx,

@@ -119,8 +119,11 @@ enum WS_ErrorCodes {
     WS_AGENT_NO_KEY_E       = -1078, /* AGENT doesn't have requested key */
     WS_AGENT_CXN_FAIL       = -1079, /* Couldn't connect to agent. */
     WS_SFTP_BAD_HEADER      = -1080, /* SFTP bad header */
+    WS_OSSH_CERT_PARSE_E    = -1081, /* Error parsing OpenSSH-style cert */
+    WS_OSSH_CERT_CA_E       = -1082, /* Error with OpenSSH-style cert's CA */
+    WS_OSSH_CERT_EXPIRED_E  = -1083, /* OpenSSH-style cert dates not valid. */
     
-    WS_LAST_E               = -1080  /* Update this to indicate last error */
+    WS_LAST_E               = -1083  /* Update this to indicate last error */
 };
 
 

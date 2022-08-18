@@ -51,6 +51,9 @@ endif
 if BUILD_FWD
 tests_api_test_CPPFLAGS     += -DWOLFSSH_FWD
 endif
+if BUILD_OPENSSH_CERTS
+tests_api_test_CPPFLAGS     += -DWOLFSSH_OSSH_CERTS
+endif
 tests_api_test_LDADD         = src/libwolfssh.la
 tests_api_test_DEPENDENCIES  = src/libwolfssh.la
 
